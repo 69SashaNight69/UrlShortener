@@ -1,0 +1,89 @@
+<div class="table-container">
+  <div class="header-row">
+    <h2>Short URLs</h2>
+
+    @if (authService.isAuthenticated()) {
+    <div class="user-info">
+      <span>
+        {{ authService.getUserName() }} ({{ authService.getRole() }})
+      </span>
+      <button (click)="onLogout()">Logout</button>
+    </div>
+    } @else {
+    <a routerLink="/login">Login</a>
+    }
+  </div>
+
+  @if (authService.isAuthenticated()) {
+  <div class="add-section">
+    <input type="text"
+           placeholder="Enter URL to shorten..."
+           [(ngModel)]="newUrl"
+           [disabled]="isAdding()" />
+
+    <button (click)="onAddUrl()"
+            [disabled]="isAdding()">
+      {{ isAdding() ? 'Adding...' : 'Add new Url' }}
+    </button>
+
+    @if (addErrorMessage()) {
+    <p class="error">{{ addErrorMessage() }}</p>
+    }
+  </div>
+  }
+
+  @if (isLoading()) {
+  <p>Loading...</p>
+  } @else if (errorMessage()) {
+  <p class="error">{{ errorMessage() }}</p>
+  } @else {
+  <table>
+    <thead>
+      <tr>
+        <th>Original URL</th>
+        <th>Short URL</th>
+        <th>Created By</th>
+        <th>Created Date</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      @for (url of urls(); track url.id) {
+      <tr>
+        <td class="truncate">
+          {{ url.originalUrl }}
+        </td>
+
+        <td>
+          <a [href]="shortUrlOrigin + '/' + url.shortCode"
+             target="_blank">
+            {{ shortUrlOrigin }}/{{ url.shortCode }}
+          </a>
+        </td>
+
+        <td>{{ url.createdBy }}</td>
+
+        <td>
+          {{ url.createdDate | date: 'short' }}
+        </td>
+
+        <td class="actions">
+          @if (authService.isAuthenticated()) {
+          <a [routerLink]="['/urls', url.id]">Details</a>
+          }
+
+          @if (url.canDelete) {
+          <button (click)="onDelete(url.id)"
+                  [disabled]="deletingId() === url.id"
+                  class="delete-btn">
+            {{ deletingId() === url.id ? 'Deleting...' : 'Delete' }}
+          </button>
+          }
+        </td>
+      </tr>
+      }
+    </tbody>
+  </table>
+  }
+</div>

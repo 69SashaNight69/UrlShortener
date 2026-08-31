@@ -1,0 +1,22 @@
+.info-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+dl {
+  margin-top: 1rem;
+}
+
+dt {
+  font-weight: bold;
+  margin-top: 0.75rem;
+}
+
+dd {
+  margin: 0.25rem 0 0 0;
+}
+
+.error {
+  color: red;
+}

@@ -1,0 +1,115 @@
+﻿@page
+@model UrlShortener.Api.Pages.AboutModel
+@{
+    ViewData["Title"] = "About";
+}
+
+<h1>About This URL Shortener</h1>
+
+<div id="about-text">Loading...</div>
+
+<div id="login-section" style="display:none; margin-top: 1rem;">
+    <p>Log in as Admin to edit this page:</p>
+    <input type="email" id="login-email" placeholder="Email" />
+    <input type="password" id="login-password" placeholder="Password" />
+    <button id="login-btn">Login</button>
+    <div id="login-message"></div>
+</div>
+
+<div id="user-info-section" style="display:none; margin-top: 1rem;">
+    <span id="logged-in-as"></span>
+    <button id="logout-btn">Logout</button>
+</div>
+
+<div id="admin-section" style="display:none; margin-top: 1rem;">
+    <textarea id="about-textarea" rows="6" style="width:100%;"></textarea>
+    <br />
+    <button id="save-btn" style="margin-top: 0.5rem;">Save</button>
+    <div id="save-message"></div>
+</div>
+
+<script>
+    const apiBase = "";
+
+    async function loadAbout() {
+      const res = await fetch(`${apiBase}/api/about`);
+      const data = await res.json();
+      document.getElementById("about-text").textContent = data.text;
+      document.getElementById("about-textarea").value = data.text;
+    }
+
+    function refreshUi() {
+      const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role");
+      const userName = localStorage.getItem("userName");
+
+      if (!token) {
+        document.getElementById("login-section").style.display = "block";
+        document.getElementById("user-info-section").style.display = "none";
+        document.getElementById("admin-section").style.display = "none";
+        return;
+      }
+
+      document.getElementById("login-section").style.display = "none";
+      document.getElementById("user-info-section").style.display = "block";
+      document.getElementById("logged-in-as").textContent = `Logged in as: ${userName} (${role})`;
+
+      document.getElementById("admin-section").style.display =
+        role === "Admin" ? "block" : "none";
+    }
+
+    document.getElementById("login-btn").addEventListener("click", async () => {
+      const email = document.getElementById("login-email").value;
+      const password = document.getElementById("login-password").value;
+      const messageEl = document.getElementById("login-message");
+
+      const res = await fetch(`${apiBase}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.role);
+        localStorage.setItem("userName", data.userName);
+        messageEl.textContent = "";
+        refreshUi();
+      } else {
+        messageEl.textContent = "Invalid credentials.";
+      }
+    });
+
+    document.getElementById("logout-btn").addEventListener("click", () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      localStorage.removeItem("userName");
+      refreshUi();
+    });
+
+    document.getElementById("save-btn").addEventListener("click", async () => {
+      const token = localStorage.getItem("token");
+      const text = document.getElementById("about-textarea").value;
+      const messageEl = document.getElementById("save-message");
+
+      const res = await fetch(`${apiBase}/api/about`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ text })
+      });
+
+      if (res.ok) {
+        messageEl.textContent = "Saved!";
+        document.getElementById("about-text").textContent = text;
+      } else {
+        messageEl.textContent = "Failed to save. You may not have permission.";
+      }
+    });
+
+    loadAbout();
+    refreshUi();
+</script>
